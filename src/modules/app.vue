@@ -2,6 +2,16 @@
   <div class="container">
     <section class="summary">
       <div class="pipe">
+        <div class="wellSelect">
+          <el-select v-model="wellValue" placeholder="请选择" @change="wellSelect">
+            <el-option
+              v-for="item in wellSelectOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            ></el-option>
+          </el-select>
+        </div>
         <div class="voltage fl">
           <p v-for="(value,index) in options1" :key="index">
             {{value}}:
@@ -51,10 +61,21 @@
 <script>
 let echarts = require("echarts");
 import { chartDataList } from "../js/config.js";
-import { getRealTimeData, getHistoryData } from "../js/api";
+import { getWellInfo,getRealTimeData, getHistoryData } from "../js/api";
 export default {
   data() {
     return {
+      wellSelectOptions: [{
+          value: 14,
+          label: '气井1'
+        }, {
+          value: 15,
+          label: '气井2'
+        }, {
+          value: 16,
+          label: '气井3'
+        }],
+      wellValue:'',
       curLine: 0,
       pickDate: "",
       dialogFormVisible: false,
@@ -82,13 +103,16 @@ export default {
       myChart: null
     };
   },
-  created() {
-    getRealTimeData(data => {
-      this.$set(this, "realTimeData", data);
-      this.showRealTimeChart();
-    });
+  async created() {
+    // this.wellSelectOptions=await getWellInfo();
+    const realTimeDataRequest=await getRealTimeData();
+    this.$set(this, "realTimeData", realTimeDataRequest);
+    this.showRealTimeChart();
   },
   methods: {
+    wellSelect(value){
+      console.log(value)
+    },
     RealTimeTrigger() {
       this.curLine = 0;
       this.showRealTimeChart();
@@ -106,31 +130,27 @@ export default {
       let startTime = endTime - 1 * 3600 * 1000;
       this.getHistoryDataFn(startTime, endTime);
     },
-    getRealTimeDataFn() {
-      getRealTimeData(data => {
-        this.$set(this, "realTimeData", data);
-        this.updateRealTimeDataToLineChart(this.realTimeData);
-      });
+    async getRealTimeDataFn() {
+      this.$set(this, "realTimeData", await getRealTimeData());
+      this.updateRealTimeDataToLineChart(this.realTimeData);
     },
     tagNameToId(name) {
       return this.realTimeData[name].tag_id;
     },
-    getHistoryDataFn(st, et) {
+    async getHistoryDataFn(st, et) {
       let tagArrTemple = [];
       chartDataList.lineArea2.legend.data.forEach((value, index, arr) => {
         tagArrTemple.push(this.tagNameToId(value));
       });
       tagArrTemple = "[" + tagArrTemple + "]";
-      getHistoryData(tagArrTemple, st, et, data => {
-        this.$set(this, "historyData", data);
-        console.log('getHistoryDataFn',this.historyData);
-        this.setHistoryDataToLineChart(this.historyData);
-      });
+      const realHistoryDataRequest=await getHistoryData(tagArrTemple, st, et);
+      this.$set(this, "historyData", realHistoryDataRequest);
+      this.setHistoryDataToLineChart(this.historyData);
     },
     setHistoryDataToLineChart(historyData) {
       //添加历史数据到echart
       clearInterval(this.timer);
-      console.log('setHistoryDataToLineChart---',this.curLine)
+      console.log("setHistoryDataToLineChart---", historyData);
       historyData.forEach((value, index, arr) => {
         chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
           if (value1.name == value.tagName) {
@@ -193,7 +213,12 @@ $bgc: #c8c8c8;
       background-size: contain;
       margin-right: $span;
       background-color: $bgc;
-      // position: relative;
+      position: relative;
+      .wellSelect{
+        position: absolute;
+        top:10px;
+        left:50px;
+      }
       .voltage,
       .flow {
         margin-left: 100px;

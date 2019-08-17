@@ -1,33 +1,43 @@
 import 'whatwg-fetch'
 import { urlList } from '../config/urls.js'
 
-export let getRealTimeData = (cb) => {
-  // if (!city) return
-  fetch(`${urlList.realtime}`, {
-    method: 'get'
-  })
-    .then(res => {
-      return res.json()
+export const getWellInfo=async ()=>{
+  try{
+    const res=await fetch(`${urlList.wellInfo}`, {
+      method: 'get'
     })
-    .then(data => {
-      cb && cb(data)
-    })
-    .catch(err => {
-      console.log('请求错误', err)
-    })
+    if(res.ok){
+      const data=await res.json();
+      return data;
+    }
+  }catch(e){
+    console.log('err +++++', ex)
+  }
 }
-export let getHistoryData = (tagArr, st, et, cb) => {
-  // if (!city) return
-  fetch(`${urlList.history}?tagArr=${tagArr}&startTime=${st}&endTime=${et}`, {
-    method: 'get'
-  })
-    .then(res => {
-      return res.json()
+export const getRealTimeData=async ()=>{
+  try{
+    const res=await fetch(`${urlList.realtime}`, {
+      method: 'get'
     })
-    .then(data => {
-      cb && cb(data)
-    })
-    .catch(err => {
-      console.log('请求错误', err)
-    })
+    if(res.ok){
+      const data=await res.json();
+      return data;
+    }
+  }catch(e){
+    console.log('err +++++', ex)
+  }
 }
+export const getHistoryData=async (tagArr, st, et)=>{
+  try{
+    const res=await fetch(`${urlList.history}?tagArr=${tagArr}&startTime=${st}&endTime=${et}`, {
+      method: 'get'
+    })
+    if(res.ok){
+      const data=await res.json();
+      return data;
+    }
+  }catch(e){
+    console.log('err +++++', ex)
+  }
+}
+
