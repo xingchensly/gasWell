@@ -14,9 +14,10 @@ export const getWellInfo=async ()=>{
     console.log('err +++++', ex)
   }
 }
-export const getRealTimeData=async ()=>{
+export const getRealTimeData=async (deviceId)=>{
   try{
-    const res=await fetch(`${urlList.realtime}`, {
+    let devId=deviceId==undefined?'device_id="14"':'device_id='+deviceId;
+    const res=await fetch(`${urlList.realtime}&${devId}`, {
       method: 'get'
     })
     if(res.ok){
