@@ -3,19 +3,21 @@
     <section class="summary">
       <div class="pipe">
         <div class="wellSelect">
-          <el-select v-model="wellValue" placeholder="请选择" @change="wellSelect">
+          <el-select v-model="curWellValue" placeholder="请选择" @change="wellSelect">
             <el-option
               v-for="item in wellSelectOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+              :key="item.device_id"
+              :label="item.device_name"
+              :value="item.device_id"
             ></el-option>
           </el-select>
         </div>
         <div class="voltage fl">
           <p v-for="(value,index) in options1" :key="index">
             {{value}}:
-            <span v-if="realTimeData[value]">{{realTimeData[value].tag_value}}</span>
+            <span
+              v-if="realTimeData[value]"
+            >{{realTimeData[value].tag_value | numberFormat}}</span>
             {{unit[value]}}
           </p>
         </div>
@@ -28,8 +30,13 @@
         </div>
       </div>
       <div class="video">
-        <!-- <img src="../img/pipe.jpg" alt=""> -->
-        <img src="http://117.34.118.57:33061/images/qijing.jpg" alt />
+        <div class="arrow">
+          <i class="el-icon-caret-left fl pointer" @click="showImage(-1)"></i>
+          <i class="el-icon-caret-right fr pointer" @click="showImage(1)"></i>
+        </div>
+        <div class="imgContainer">
+          <img :src="imgUrl" alt />
+        </div>
       </div>
     </section>
     <section class="charts">
@@ -61,39 +68,43 @@
 <script>
 let echarts = require("echarts");
 import { chartDataList } from "../js/config.js";
-import { getWellInfo,getRealTimeData, getHistoryData } from "../js/api";
+import { getWellInfo, getRealTimeData, getHistoryData } from "../js/api";
+import { urlList } from "../config/urls.js";
 export default {
   data() {
     return {
-      wellSelectOptions: [{
-          value: 14,
-          label: '气井1'
-        }, {
-          value: 15,
-          label: '气井2'
-        }, {
-          value: 16,
-          label: '气井3'
-        }],
-      wellValue:'',
+      imgUrl: "",
+      imgIndex: 0,
+      wellSelectOptions: [],
+      curWellValue: "",
+      curWellId: null,
       curLine: 0,
       pickDate: "",
       dialogFormVisible: false,
       formLabelWidth: "120px",
       dialogFormVisible: false,
       unit: {
-        太阳能板电压: "V",
-        太阳能板电流: "A",
+        光伏板电压: "V",
+        光伏板电流: "A",
         阀门开度: "%",
         套压: "MPa",
         油压: "MPa",
-        流量: "m³/h",
+        瞬时流量: "m³/h",
+        累计流量: "m³/h",
         流量计压力: "V",
         流量计温度: "℃",
-        蓄电池电压: "V"
+        蓄电池电压: "V",
+        蓄电池电流: "A"
       },
-      options1: ["太阳能板电压", "太阳能板电流", "阀门开度", "套压", "油压"],
-      options2: ["流量", "流量计压力", "流量计温度", "蓄电池电压"],
+      options1: [
+        "油压",
+        "套压",
+        "流量计压力",
+        "流量计温度",
+        "瞬时流量",
+        "累计流量"
+      ],
+      options2: ["光伏板电压", "光伏板电流", "蓄电池电压", "蓄电池电流"],
       value: "",
       chartDataList: chartDataList,
       realTimeData: {},
@@ -105,13 +116,55 @@ export default {
   },
   async created() {
     // this.wellSelectOptions=await getWellInfo();
-    const realTimeDataRequest=await getRealTimeData();
-    this.$set(this, "realTimeData", realTimeDataRequest);
-    this.showRealTimeChart();
+    this.showImage(0);
+    const wellInfo = await getWellInfo();
+    wellInfo.shift(); //剔除井场
+    this.$set(this, "wellSelectOptions", wellInfo);
+    this.$set(this, "curWellValue", this.wellSelectOptions[0].device_name);
+    this.$set(this, "curWellId", this.wellSelectOptions[0].device_id);
+    this.wellInit(this.wellSelectOptions[0].device_id);
+  },
+  filters: {
+    numberFormat(value) {
+      var param = "";
+      var k = 10000,
+        sizes = ["", "万", "亿", "万亿", "万万亿"],
+        i;
+      if (value < k) {
+        param = value;
+      } else {
+        i = Math.floor(Math.log(value) / Math.log(k));
+        param = (value / Math.pow(k, i)).toFixed(2) + sizes[i];
+      }
+      return param;
+    }
   },
   methods: {
-    wellSelect(value){
-      console.log(value)
+    showImage(index) {
+      if (index == -1) {
+        this.imgIndex += 1;
+      } else if (index == 1) {
+        this.imgIndex -= 1;
+      } else {
+        this.imgIndex == 0;
+      }
+      if (this.imgIndex < 0) this.imgIndex = 0;
+      this.imgUrl = urlList.img + "?imgIndex=" + this.imgIndex;
+    },
+    async wellInit(wellId) {
+      const realTimeDataRequest = await getRealTimeData(wellId);
+      this.$set(this, "realTimeData", realTimeDataRequest);
+      console.log("realTimeData", this.realTimeData);
+      this.showRealTimeChart();
+    },
+    wellSelect(value) {
+      console.log('wellselect')
+      //清空历史数据
+      chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
+          chartDataList.lineArea2.series[index1].data = [];
+      });
+      this.$set(this, "curWellId", value);
+      this.wellInit(value);
     },
     RealTimeTrigger() {
       this.curLine = 0;
@@ -131,7 +184,7 @@ export default {
       this.getHistoryDataFn(startTime, endTime);
     },
     async getRealTimeDataFn() {
-      this.$set(this, "realTimeData", await getRealTimeData());
+      this.$set(this, "realTimeData", await getRealTimeData(this.curWellId));
       this.updateRealTimeDataToLineChart(this.realTimeData);
     },
     tagNameToId(name) {
@@ -143,7 +196,7 @@ export default {
         tagArrTemple.push(this.tagNameToId(value));
       });
       tagArrTemple = "[" + tagArrTemple + "]";
-      const realHistoryDataRequest=await getHistoryData(tagArrTemple, st, et);
+      const realHistoryDataRequest = await getHistoryData(tagArrTemple, st, et);
       this.$set(this, "historyData", realHistoryDataRequest);
       this.setHistoryDataToLineChart(this.historyData);
     },
@@ -204,20 +257,20 @@ $bgc: #c8c8c8;
     @include flexCenter;
   }
   .summary {
-    height: 460px;
+    height: 46%;
     margin-bottom: $span;
     .pipe {
-      width: 1108px;
+      width: 56%;
       height: 100%;
       background: url("../img/pipe.png");
       background-size: contain;
       margin-right: $span;
       background-color: $bgc;
       position: relative;
-      .wellSelect{
+      .wellSelect {
         position: absolute;
-        top:10px;
-        left:50px;
+        top: 10px;
+        left: 50px;
       }
       .voltage,
       .flow {
@@ -234,6 +287,7 @@ $bgc: #c8c8c8;
         // position:absolute;
       }
       .flow {
+        margin-left: 10px;
       }
     }
     .video {
@@ -241,6 +295,21 @@ $bgc: #c8c8c8;
       height: 100%;
       background-color: $bgc;
       text-align: center;
+      position: relative;
+      .arrow {
+        width: 100%;
+        height: 40px;
+        position: absolute;
+        top: 50%;
+        i {
+          color: #fff;
+          font-size: 40px;
+        }
+      }
+      .imgContainer {
+        width: 100%;
+        height: 100%;
+      }
       img {
         width: 100%;
         height: 100%;
