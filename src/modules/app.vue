@@ -204,10 +204,11 @@ export default {
       historyData.forEach((value, index, arr) => {
         chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
           if (value1.name == value.tagName) {
-            chartDataList.lineArea2.series[index1].data = value.datas;
+            chartDataList.lineArea2.series[index1].data = value.datas&&value.datas.length>0?value.datas:[];
           }
         });
       });
+      console.log('setHistoryDataToLineChart',this.chartDataList.lineArea2);
       this.myChart.setOption(this.chartDataList.lineArea2);
       if (this.curLine == 0) {
         //如果显示实时数据曲线，添加定时器获取实时数据
@@ -220,7 +221,7 @@ export default {
       //添加实时数据到echart
       chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
         Object.keys(realTimeData).forEach((value, index, arr) => {
-          if (value1.name == value) {
+          if (value1.name == value&&realTimeData[value]&&realTimeData[value].update_time!=null&&realTimeData[value].tag_value!=null) {
             let arrTemp = [];
             arrTemp.push(new Date(realTimeData[value].update_time).getTime());
             arrTemp.push(realTimeData[value].tag_value);
@@ -228,6 +229,8 @@ export default {
           }
         });
       });
+      console.log('updateRealTimeDataToLineChart',this.chartDataList.lineArea2);
+
       this.myChart.setOption(this.chartDataList.lineArea2);
     }
   },
