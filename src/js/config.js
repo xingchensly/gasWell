@@ -45,7 +45,8 @@ export let chartDataList = {
     },
     legend: {
       // ...defaultStyle.legend,
-      data: ['油压', '套压', '瞬时流量', '光伏板电压']
+      data: ['油压','累计流量','套压', '瞬时流量']
+      // data: ['油压','累计流量','套压', '瞬时流量', '光伏板电压']
     },
     grid: {
       left: '3%',
@@ -76,15 +77,15 @@ export let chartDataList = {
         areaStyle: {},
         data: []
       },
-      // {
-      //   smooth: true,
-      //   symbol: 'none',
-      //   name: '累计流量',
-      //   type: 'line',
-      //   stack: '总量',
-      //   areaStyle: {},
-      //   data: []
-      // },
+      {
+        smooth: true,
+        symbol: 'none',
+        name: '累计流量',
+        type: 'line',
+        stack: '总量',
+        areaStyle: {},
+        data: []
+      },
       {
         smooth: true,
         symbol: 'none',
@@ -103,15 +104,15 @@ export let chartDataList = {
         areaStyle: { normal: {} },
         data: []
       },
-      {
-        smooth: true,
-        symbol: 'none',
-        name: '光伏板电压',
-        type: 'line',
-        stack: '总量',
-        areaStyle: { normal: {} },
-        data: []
-      }
+      // {
+      //   smooth: true,
+      //   symbol: 'none',
+      //   name: '光伏板电压',
+      //   type: 'line',
+      //   stack: '总量',
+      //   areaStyle: { normal: {} },
+      //   data: []
+      // }
     ],
     color: colors
   }

@@ -154,11 +154,9 @@ export default {
     async wellInit(wellId) {
       const realTimeDataRequest = await getRealTimeData(wellId);
       this.$set(this, "realTimeData", realTimeDataRequest);
-      console.log("realTimeData", this.realTimeData);
       this.showRealTimeChart();
     },
     wellSelect(value) {
-      console.log('wellselect')
       //清空历史数据
       chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
           chartDataList.lineArea2.series[index1].data = [];
@@ -203,7 +201,6 @@ export default {
     setHistoryDataToLineChart(historyData) {
       //添加历史数据到echart
       clearInterval(this.timer);
-      console.log("setHistoryDataToLineChart---", historyData);
       historyData.forEach((value, index, arr) => {
         chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
           if (value1.name == value.tagName) {
