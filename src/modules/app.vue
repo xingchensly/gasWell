@@ -12,6 +12,9 @@
             ></el-option>
           </el-select>
         </div>
+        <div class="valveOutline pointer" @click="showValve">
+          <!-- <p class="valveValue">开度：12%</p> -->
+        </div>
         <div class="voltage fl">
           <p v-for="(value,index) in options1" :key="index">
             {{value}}:
@@ -63,16 +66,35 @@
         <el-button type="primary" @click="dateConfirm">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog
+      title=""
+      :visible.sync="dialogVisible"
+      width="30%"
+      :before-close="handleClose">
+      <div class="valveInputcontainer">
+        调节开度
+        <el-slider v-model="valve" class="valveInput" @input="valveChange"></el-slider>
+      </div>
+      <div class="valveChartContainer">
+        <div ref="valve" class="valveChart"></div>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+      </span>
+    </el-dialog>    
   </div>
 </template>
 <script>
 let echarts = require("echarts");
-import { chartDataList } from "../js/config.js";
+import { chartDataList ,chartValve} from "../js/config.js";
 import { getWellInfo, getRealTimeData, getHistoryData } from "../js/api";
 import { urlList } from "../config/urls.js";
 export default {
   data() {
     return {
+      valve:"",
+      dialogVisible: false,
       imgUrl: "",
       imgIndex: 0,
       wellSelectOptions: [],
@@ -107,11 +129,13 @@ export default {
       options2: ["光伏板电压", "光伏板电流", "蓄电池电压", "蓄电池电流"],
       value: "",
       chartDataList: chartDataList,
+      chartValve: chartValve,
       realTimeData: {},
       historyData: {},
       timer: null,
       interval: 60000,
-      myChart: null
+      lineChart: null,
+      gaugeChart: null
     };
   },
   async created() {
@@ -140,6 +164,25 @@ export default {
     }
   },
   methods: {
+    showValve(){
+      this.dialogVisible=true;
+      this.$nextTick(()=>{
+        console.log(this.$refs.valve)
+        this.gaugeChart = echarts.init(this.$refs.valve);
+        this.gaugeChart.setOption(this.chartValve);
+      })
+    },
+    valveChange(value){
+      this.chartValve.series[0].data[0].value=value;
+      this.gaugeChart.setOption(this.chartValve);
+    },
+    handleClose(done) {
+      this.$confirm('确认关闭？')
+        .then(_ => {
+          done();
+        })
+        .catch(_ => {});
+    },
     showImage(index) {
       if (index == -1) {
         this.imgIndex += 1;
@@ -209,7 +252,7 @@ export default {
         });
       });
       console.log('setHistoryDataToLineChart',this.chartDataList.lineArea2);
-      this.myChart.setOption(this.chartDataList.lineArea2);
+      this.lineChart.setOption(this.chartDataList.lineArea2);
       if (this.curLine == 0) {
         //如果显示实时数据曲线，添加定时器获取实时数据
         this.timer = setInterval(() => {
@@ -231,13 +274,13 @@ export default {
       });
       console.log('updateRealTimeDataToLineChart',this.chartDataList.lineArea2);
 
-      this.myChart.setOption(this.chartDataList.lineArea2);
+      this.lineChart.setOption(this.chartDataList.lineArea2);
     }
   },
   components: {},
   mounted() {
-    this.myChart = echarts.init(this.$refs.chart);
-    this.myChart.setOption(this.chartDataList.lineArea2);
+    this.lineChart = echarts.init(this.$refs.chart);
+    this.lineChart.setOption(this.chartDataList.lineArea2);
   }
 };
 </script>
@@ -246,7 +289,10 @@ export default {
 $span: 5px;
 $bgc: #c8c8c8;
 // $bgc:#122D4A;
-
+.el-dialog__body{
+  padding:0;
+  // padding-bottom: 10px;
+}
 .container {
   width: 100%;
   height: 100%;
@@ -256,6 +302,27 @@ $bgc: #c8c8c8;
     width: 100%;
     @include flexCenter;
   }
+  .valveInputcontainer{
+    width:100%;
+    padding-left:50px;
+    box-sizing: border-box;
+    .valveInput{
+      width:300px;
+      // margin-left:50px;
+    }
+  }
+  .valveChartContainer{
+    width:100%;
+    height:300px;
+    position: relative;
+  }
+  .valveChart{
+    position: absolute;
+    left:50%;
+    transform: translateX(-50%);
+    width:440px;
+    height:100%;
+  }
   .summary {
     height: 46%;
     margin-bottom: $span;
@@ -263,7 +330,8 @@ $bgc: #c8c8c8;
       width: 56%;
       height: 100%;
       background: url("../img/pipe.png");
-      background-size: contain;
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
       margin-right: $span;
       background-color: $bgc;
       position: relative;
@@ -271,6 +339,19 @@ $bgc: #c8c8c8;
         position: absolute;
         top: 10px;
         left: 50px;
+      }
+      .valveOutline{
+        border:black dashed 1px;
+        position: absolute;
+        width:50px;
+        height:70px;
+        background-color: transparent;
+        top:65%;
+        left:33%;
+        // .valveValue{
+        //   position: absolute;
+        //   transform: translateX(100%);
+        // }
       }
       .voltage,
       .flow {
@@ -287,7 +368,7 @@ $bgc: #c8c8c8;
         // position:absolute;
       }
       .flow {
-        margin-left: 10px;
+        margin-left:30px;
       }
     }
     .video {

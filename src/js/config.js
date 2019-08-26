@@ -10,25 +10,37 @@ let colors = [
   '#5C658A',
   '#FFEE51'
 ]
-let defaultStyle = {
-  axis: {
-    // splitLine: { show: false },
-    // axisLine: {
-    //   lineStyle: {
-    //     color: '#fff'
-    //   }
-    // },
-    // axisLabel: {
-    //   color: '#fff',
-    //   fontSize: 12
-    // }
-  },
-  legend: {
-    // textStyle: {
-    //   color: '#fff'
-    // }
-  }
+// let defaultStyle = {
+//   axis: {
+//     // splitLine: { show: false },
+//     // axisLine: {
+//     //   lineStyle: {
+//     //     color: '#fff'
+//     //   }
+//     // },
+//     // axisLabel: {
+//     //   color: '#fff',
+//     //   fontSize: 10
+//     // }
+//   },
+//   legend: {
+//     // textStyle: {
+//     //   color: '#fff'
+//     // }
+//   }
+// }
+export let chartValve = {
+  // ...defaultStyle.axis,
+  series: [
+    {
+      name: '阀门开度',
+      type: 'gauge',
+      detail: {formatter: '{value}%'},
+      data: [{value: 0, name: '阀门开度'}]
+    }
+  ]
 }
+
 export let chartDataList = {
   lineArea2: {
     dataZoom: {
@@ -46,7 +58,7 @@ export let chartDataList = {
     legend: {
       // ...defaultStyle.legend,
       // data: ['油压','累计流量','套压', '瞬时流量']
-      data: ['油压','累计流量','套压', '瞬时流量', '光伏板电压']
+      data: ['油压', '累计流量', '套压', '瞬时流量', '光伏板电压']
     },
     grid: {
       left: '3%',
@@ -56,14 +68,14 @@ export let chartDataList = {
     },
     xAxis: [
       {
-        ...defaultStyle.axis,
+        // ...defaultStyle.axis,
         type: 'time',
         boundaryGap: false
       }
     ],
     yAxis: [
       {
-        ...defaultStyle.axis,
+        // ...defaultStyle.axis,
         type: 'value'
       }
     ],
