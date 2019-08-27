@@ -14,6 +14,7 @@
         </div>
         <div class="valveOutline pointer" @click="showValve">
           <!-- <p class="valveValue">开度：12%</p> -->
+          <el-tag type="success" effect="dark" class="valveValue" v-if="realTimeData['气动阀反馈']!=undefined">开度：{{realTimeData['气动阀反馈'].tag_value}}</el-tag>
         </div>
         <div class="voltage fl">
           <p v-for="(value,index) in options1" :key="index">
@@ -69,10 +70,9 @@
     <el-dialog
       title=""
       :visible.sync="dialogVisible"
-      width="30%"
-      :before-close="handleClose">
+      width="30%">
       <div class="valveInputcontainer">
-        调节开度
+        <p>调节开度</p>
         <el-slider v-model="valve" class="valveInput" @input="valveChange"></el-slider>
       </div>
       <div class="valveChartContainer">
@@ -304,10 +304,12 @@ $bgc: #c8c8c8;
   }
   .valveInputcontainer{
     width:100%;
-    padding-left:50px;
+    // height:40px;
     box-sizing: border-box;
+    text-align: center;
     .valveInput{
-      width:300px;
+      width:60%;
+      margin: 0 auto;
       // margin-left:50px;
     }
   }
@@ -343,15 +345,17 @@ $bgc: #c8c8c8;
       .valveOutline{
         border:black dashed 1px;
         position: absolute;
-        width:50px;
-        height:70px;
+        // width:50px;
+        width:6%;
+        height:24%;
+        // height:70px;
         background-color: transparent;
         top:65%;
         left:33%;
-        // .valveValue{
-        //   position: absolute;
-        //   transform: translateX(100%);
-        // }
+        .valveValue{
+          position: absolute;
+          transform: translateX(110%);
+        }
       }
       .voltage,
       .flow {
