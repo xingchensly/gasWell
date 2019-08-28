@@ -80,7 +80,7 @@
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="setValveData">确 定</el-button>
       </span>
     </el-dialog>    
   </div>
@@ -88,7 +88,7 @@
 <script>
 let echarts = require("echarts");
 import { chartDataList ,chartValve} from "../js/config.js";
-import { getWellInfo, getRealTimeData, getHistoryData } from "../js/api";
+import { getWellInfo, getRealTimeData, getHistoryData,setWellData } from "../js/api";
 import { urlList } from "../config/urls.js";
 export default {
   data() {
@@ -164,6 +164,21 @@ export default {
     }
   },
   methods: {
+    async setValveData(){
+        this.dialogVisible = false;
+        let requestData=await setWellData(this.curWellId,'气动阀反馈',this.valve);
+        if(requestData=="true"){
+            this.$message({
+              message: '气动阀开度设置成功',
+              type: 'success'
+            });
+        }else{
+            this.$message({
+              message: '气动阀开度设置失败',
+              type: 'warning'
+            });
+        }
+    },
     showValve(){
       this.dialogVisible=true;
       this.$nextTick(()=>{

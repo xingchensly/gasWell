@@ -1,6 +1,19 @@
 import 'whatwg-fetch'
 import { urlList } from '../config/urls.js'
 
+export const setWellData = async (deviceId,tagName,tagValue) => {
+  try {
+    const res = await fetch(`${urlList.setData}?device_id="${deviceId}"&tag_name="${tagName}"&tag_value="${tagValue}"`, {
+      method: 'get'
+    })
+    if (res.ok) {
+      const data = await res.json()
+      return data
+    }
+  } catch (e) {
+    console.log('err +++++', e)
+  }
+}
 export const getWellInfo = async () => {
   try {
     const res = await fetch(`${urlList.wellInfo}`, {
