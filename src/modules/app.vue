@@ -166,7 +166,7 @@ export default {
   methods: {
     async setValveData(){
         this.dialogVisible = false;
-        let requestData=await setWellData(this.curWellId,'气动阀反馈',this.valve);
+        let requestData=await setWellData(this.curWellId,'气动阀开度',this.valve);
         if(requestData=="true"){
             this.$message({
               message: '气动阀开度设置成功',
