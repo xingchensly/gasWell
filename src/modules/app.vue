@@ -13,8 +13,7 @@
           </el-select>
         </div>
         <div class="valveOutline pointer" @click="showValve">
-          <!-- <p class="valveValue">开度：12%</p> -->
-          <el-tag type="success" effect="dark" class="valveValue" v-if="realTimeData['气动阀反馈']!=undefined">开度：{{realTimeData['气动阀反馈'].tag_value}}</el-tag>
+          <el-tag class="valveValue" v-if="realTimeData['气动阀反馈']!=undefined">开度：{{realTimeData['气动阀反馈'].tag_value}}</el-tag>
         </div>
         <div class="voltage fl">
           <p v-for="(value,index) in options1" :key="index">
@@ -134,13 +133,18 @@ export default {
       historyData: {},
       timer: null,
       interval: 60000,
+      imageInterval: 600000,
       lineChart: null,
       gaugeChart: null
     };
   },
   async created() {
-    // this.wellSelectOptions=await getWellInfo();
+
     this.showImage(0);
+    setInterval(() => {
+      this.showImage(0);
+    }, this.imageInterval);
+
     const wellInfo = await getWellInfo();
     wellInfo.shift(); //剔除井场
     this.$set(this, "wellSelectOptions", wellInfo);
@@ -367,9 +371,13 @@ $bgc: #c8c8c8;
         background-color: transparent;
         top:65%;
         left:33%;
+        .el-tag{
+          background-color: rgb(64,158,255);
+          color:#fff;
+        }
         .valveValue{
           position: absolute;
-          transform: translateX(110%);
+          transform: translate(110%,50%);
         }
       }
       .voltage,
