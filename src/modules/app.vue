@@ -72,7 +72,7 @@
       width="30%">
       <div class="valveInputcontainer">
         <p>调节开度</p>
-        <el-slider v-model="valve" class="valveInput" @input="valveChange"></el-slider>
+        <el-slider v-model="slideValve" class="valveInput" @input="valveChange"></el-slider>
       </div>
       <div class="valveChartContainer">
         <div ref="valve" class="valveChart"></div>
@@ -81,18 +81,38 @@
         <el-button @click="dialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="setValveData">确 定</el-button>
       </span>
-    </el-dialog>    
+    </el-dialog> 
+    <el-dialog title="用户信息" :visible.sync="dialogUserInfoShow">
+      <el-form :model="userForm" class="userForm">
+        <el-form-item label="账户" :label-width="formLabelWidth">
+          <el-input v-model="userForm.name" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" :label-width="formLabelWidth">
+          <el-input v-model="userForm.code" autocomplete="off" :show-password='true'></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogUserInfoShow = false">取 消</el-button>
+        <el-button type="primary" @click="userConfirm">确 定</el-button>
+      </div>
+    </el-dialog>       
   </div>
 </template>
 <script>
 let echarts = require("echarts");
 import { chartDataList ,chartValve} from "../js/config.js";
-import { getWellInfo, getRealTimeData, getHistoryData,setWellData } from "../js/api";
+import { getWellInfo, getRealTimeData, getHistoryData,setWellData,loginIn } from "../js/api";
 import { urlList } from "../config/urls.js";
 export default {
   data() {
     return {
-      valve:"",
+      loginIn:false,
+      userForm:{
+        name:"admin",
+        code:null
+      },
+      dialogUserInfoShow:false,
+      slideValve:0,
       dialogVisible: false,
       imgUrl: "",
       imgIndex: 0,
@@ -126,7 +146,7 @@ export default {
         "累计流量"
       ],
       options2: ["光伏板电压", "光伏板电流", "蓄电池电压", "蓄电池电流"],
-      value: "",
+      // value: "",
       chartDataList: chartDataList,
       chartValve: chartValve,
       realTimeData: {},
@@ -168,6 +188,19 @@ export default {
     }
   },
   methods: {
+    async userConfirm(){
+      this.dialogUserInfoShow = false;
+      let userBack=await loginIn(this.userForm);
+      if(userBack=="true"){
+        this.loginIn=true;
+        this.showValve();
+      }else{
+        this.$message({
+          message: '账号或者密码错误',
+          type: 'warning'
+        });
+      }
+    },
     async setValveData(){
         this.dialogVisible = false;
         let requestData=await setWellData(this.curWellId,'气动阀开度',this.valve);
@@ -183,15 +216,21 @@ export default {
             });
         }
     },
+    showUserDialog(){
+      this.dialogUserInfoShow=true;
+    },
     showValve(){
+      if(!this.loginIn){
+        return this.showUserDialog();
+      }
       this.dialogVisible=true;
       this.$nextTick(()=>{
-        console.log(this.$refs.valve)
         this.gaugeChart = echarts.init(this.$refs.valve);
         this.gaugeChart.setOption(this.chartValve);
       })
     },
     valveChange(value){
+      if(!this.gaugeChart) return
       this.chartValve.series[0].data[0].value=value;
       this.gaugeChart.setOption(this.chartValve);
     },
@@ -270,7 +309,6 @@ export default {
           }
         });
       });
-      console.log('setHistoryDataToLineChart',this.chartDataList.lineArea2);
       this.lineChart.setOption(this.chartDataList.lineArea2);
       if (this.curLine == 0) {
         //如果显示实时数据曲线，添加定时器获取实时数据
@@ -291,8 +329,6 @@ export default {
           }
         });
       });
-      console.log('updateRealTimeDataToLineChart',this.chartDataList.lineArea2);
-
       this.lineChart.setOption(this.chartDataList.lineArea2);
     }
   },
@@ -311,6 +347,9 @@ $bgc: #c8c8c8;
 .el-dialog__body{
   padding:0;
   // padding-bottom: 10px;
+}
+.userForm{
+  width:80%;
 }
 .container {
   width: 100%;
