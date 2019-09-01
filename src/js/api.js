@@ -4,7 +4,7 @@ var md5 = require('js-md5')
 
 export const loginIn = async (user) => {
   try {
-    const res = await fetch(`${urlList.loginIn}?user="${user.name}"&code="${md5(user.code)}`, {
+    const res = await fetch(`${urlList.loginIn}?user="${user.name}"&code="${md5(user.code)}"`, {
       method: 'get'
     })
     if (res.ok) {
