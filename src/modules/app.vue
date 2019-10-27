@@ -1,101 +1,131 @@
 <template>
-  <div class="container">
-    <section class="summary">
-      <div class="pipe">
-        <div class="wellSelect">
-          <el-select v-model="curWellValue" placeholder="请选择" @change="wellSelect">
-            <el-option
-              v-for="item in wellSelectOptions"
-              :key="item.device_id"
-              :label="item.device_name"
-              :value="item.device_id"
-            ></el-option>
-          </el-select>
+  <div class="total">
+    <div class="container"  v-show="!zs_show">
+      <section class="summary">
+        <div class="pipe">
+          <div class="valveOutline pointer" @click="showValve">
+            <el-tag class="valveValue" v-if="realTimeData['气动阀反馈']!=undefined">开度：{{realTimeData['气动阀反馈'].tag_value}}</el-tag>
+          </div>
+          <div class="voltage fl">
+            <p v-for="(value,index) in options1" :key="index">
+              {{value}}:
+              <span
+                v-if="realTimeData[value]"
+              >{{realTimeData[value].tag_value | numberFormat}}</span>
+              {{unit[value]}}
+            </p>
+          </div>
+          <div class="flow fl">
+            <p v-for="(value,index) in options2" :key="index">
+              {{value}}:
+              <span v-if="realTimeData[value]">{{realTimeData[value].tag_value}}</span>
+              {{unit[value]}}
+            </p>
+          </div>
         </div>
-        <div class="valveOutline pointer" @click="showValve">
-          <el-tag class="valveValue" v-if="realTimeData['气动阀反馈']!=undefined">开度：{{realTimeData['气动阀反馈'].tag_value}}</el-tag>
+        <div class="video">
+          <div class="arrow">
+            <i class="el-icon-caret-left fl pointer" @click="showImage(-1)"></i>
+            <i class="el-icon-caret-right fr pointer" @click="showImage(1)"></i>
+          </div>
+          <div class="imgContainer">
+            <img :src="imgUrl" alt />
+          </div>
         </div>
-        <div class="voltage fl">
-          <p v-for="(value,index) in options1" :key="index">
-            {{value}}:
-            <span
-              v-if="realTimeData[value]"
-            >{{realTimeData[value].tag_value | numberFormat}}</span>
-            {{unit[value]}}
-          </p>
+      </section>
+      <section class="charts">
+        <div class="chart" ref="chart"></div>
+        <div class="select">
+          <el-button :type="curLine==0?'primary':''" @click="RealTimeTrigger">实时曲线</el-button>
+          <el-button :type="curLine==1?'primary':''" @click="dialogFormVisible=true">历史曲线</el-button>
         </div>
-        <div class="flow fl">
-          <p v-for="(value,index) in options2" :key="index">
-            {{value}}:
-            <span v-if="realTimeData[value]">{{realTimeData[value].tag_value}}</span>
-            {{unit[value]}}
-          </p>
+      </section>
+      <el-dialog title="历史曲线配置" :visible.sync="dialogFormVisible">
+        <el-form>
+          <el-form-item label="查询时间范围" :label-width="formLabelWidth">
+            <el-date-picker
+              v-model="pickDate"
+              type="datetimerange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+            ></el-date-picker>
+          </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogFormVisible = false">取 消</el-button>
+          <el-button type="primary" @click="dateConfirm">确 定</el-button>
         </div>
-      </div>
-      <div class="video">
-        <div class="arrow">
-          <i class="el-icon-caret-left fl pointer" @click="showImage(-1)"></i>
-          <i class="el-icon-caret-right fr pointer" @click="showImage(1)"></i>
+      </el-dialog>
+      <el-dialog
+        title=""
+        :visible.sync="dialogVisible"
+        width="30%">
+        <div class="valveInputcontainer">
+          <p>调节开度</p>
+          <el-slider v-model="slideValve" class="valveInput" @input="valveChange"></el-slider>
         </div>
-        <div class="imgContainer">
-          <img :src="imgUrl" alt />
+        <div class="valveChartContainer">
+          <div ref="valve" class="valveChart"></div>
         </div>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="dialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="setValveData">确 定</el-button>
+        </span>
+      </el-dialog> 
+      <el-dialog title="用户信息" :visible.sync="dialogUserInfoShow">
+        <el-form :model="userForm" class="userForm">
+          <el-form-item label="账户" :label-width="formLabelWidth">
+            <el-input v-model="userForm.name" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item label="密码" :label-width="formLabelWidth">
+            <el-input v-model="userForm.code" autocomplete="off" :show-password='true'></el-input>
+          </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogUserInfoShow = false">取 消</el-button>
+          <el-button type="primary" @click="userConfirm">确 定</el-button>
+        </div>
+      </el-dialog>       
+    </div>
+    <div class="zhusai" v-show="zs_show">
+      <div class="zs_pic">
+        <img src="../img/zs.jpg" alt="">
       </div>
-    </section>
-    <section class="charts">
-      <div class="chart" ref="chart"></div>
-      <div class="select">
-        <el-button :type="curLine==0?'primary':''" @click="RealTimeTrigger">实时曲线</el-button>
-        <el-button :type="curLine==1?'primary':''" @click="dialogFormVisible=true">历史曲线</el-button>
+      <div class="zs_data">
+        <div class="zs_real">
+        <el-card class="box-card">
+          <div slot="header" class="clearfix">
+            <span>实时数据</span>
+            <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button>
+          </div>
+          <div v-for="(value,index) in zs_realData" :key="index" class="text item">
+            {{index + " : "+value }}
+          </div>
+        </el-card>
+        <el-card class="box-card">
+          <div slot="header" class="clearfix">
+            <span>生产制度</span>
+            <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button>
+          </div>
+          <div v-for="(value,index) in zs_zhidu" :key="index" class="text item">
+            {{index + " : "+value }}
+          </div>
+        </el-card>
+        </div>
+        <div class="zs_chart" ref="zs_chart"></div>
       </div>
-    </section>
-    <el-dialog title="历史曲线配置" :visible.sync="dialogFormVisible">
-      <el-form>
-        <el-form-item label="查询时间范围" :label-width="formLabelWidth">
-          <el-date-picker
-            v-model="pickDate"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-          ></el-date-picker>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dateConfirm">确 定</el-button>
-      </div>
-    </el-dialog>
-    <el-dialog
-      title=""
-      :visible.sync="dialogVisible"
-      width="30%">
-      <div class="valveInputcontainer">
-        <p>调节开度</p>
-        <el-slider v-model="slideValve" class="valveInput" @input="valveChange"></el-slider>
-      </div>
-      <div class="valveChartContainer">
-        <div ref="valve" class="valveChart"></div>
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="setValveData">确 定</el-button>
-      </span>
-    </el-dialog> 
-    <el-dialog title="用户信息" :visible.sync="dialogUserInfoShow">
-      <el-form :model="userForm" class="userForm">
-        <el-form-item label="账户" :label-width="formLabelWidth">
-          <el-input v-model="userForm.name" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="密码" :label-width="formLabelWidth">
-          <el-input v-model="userForm.code" autocomplete="off" :show-password='true'></el-input>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogUserInfoShow = false">取 消</el-button>
-        <el-button type="primary" @click="userConfirm">确 定</el-button>
-      </div>
-    </el-dialog>       
+    </div>
+    <div class="wellSelect">
+      <el-select v-model="curWellValue" placeholder="请选择" @change="wellSelect">
+        <el-option
+          v-for="item in wellSelectOptions"
+          :key="item.device_id"
+          :label="item.device_name"
+          :value="item.device_id"
+        ></el-option>
+      </el-select>
+    </div>
   </div>
 </template>
 <script>
@@ -106,6 +136,27 @@ import { urlList } from "../config/urls.js";
 export default {
   data() {
     return {
+      zs_realData:{
+        "油管压力":"1.47Mpa",
+        "套管压力":"1.47Mpa",
+        "瞬时气量":"1.47Mpa",
+        "瞬时液量":"1.47Mpa",
+        "工作状态":"上升",
+        "剩余时间":"05:58:45",
+        "柱塞速度":"1.47m/s",
+        "转发电量":"100%"
+      },
+      zs_zhidu:{
+        "井站名称":"三厂 苏14-4-10",
+        "井站归属":"长庆油田公司",
+        "底座深度":"3567m",
+        "生产方式":"柱塞排水",
+        "生产制度":"定时生产",
+        "开井时间":"05:58:45",
+        "关井时间":"05:58:45",
+        "危险时间":"05:58:45"
+      },
+      zs_show:false,
       loginIn:false,
       userForm:{
         name:"admin",
@@ -155,6 +206,7 @@ export default {
       interval: 60000,
       imageInterval: 600000,
       lineChart: null,
+      zs_chart:null,
       gaugeChart: null
     };
   },
@@ -167,6 +219,13 @@ export default {
 
     const wellInfo = await getWellInfo();
     wellInfo.shift(); //剔除井场
+    let objTemple={
+      description: "",
+      device_id: 10086,
+      device_name: "柱塞"
+    }
+    wellInfo.push(objTemple);// 添加柱塞
+
     this.$set(this, "wellSelectOptions", wellInfo);
     this.$set(this, "curWellValue", this.wellSelectOptions[0].device_name);
     this.$set(this, "curWellId", this.wellSelectOptions[0].device_id);
@@ -258,6 +317,17 @@ export default {
       this.showRealTimeChart();
     },
     wellSelect(value) {
+      if(value==10086){
+        this.zs_show=true;
+        setTimeout(() => {
+          this.zs_chart = echarts.init(this.$refs.zs_chart);
+          this.zs_chart.setOption(this.chartDataList.zs_chart);
+        }, 0);
+        return;
+      }else{
+        this.zs_show=false;
+      }
+        
       //清空历史数据
       chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
           chartDataList.lineArea2.series[index1].data = [];
@@ -351,6 +421,15 @@ $bgc: #c8c8c8;
 .userForm{
   width:80%;
 }
+.total{
+  width:100%;
+  height:100%;
+}
+.wellSelect {
+  position: absolute;
+  top: 10px;
+  left: 50px;
+}
 .container {
   width: 100%;
   height: 100%;
@@ -395,11 +474,7 @@ $bgc: #c8c8c8;
       margin-right: $span;
       background-color: $bgc;
       position: relative;
-      .wellSelect {
-        position: absolute;
-        top: 10px;
-        left: 50px;
-      }
+
       .valveOutline{
         border:black dashed 1px;
         position: absolute;
@@ -484,6 +559,46 @@ $bgc: #c8c8c8;
       height: 100%;
       // background-color: #122D4A;
       background-color: $bgc;
+    }
+  }
+}
+.zhusai{
+  width:100%;
+  height:100%;
+  display: flex;
+  .zs_pic{
+    text-align: center;
+    img{
+      // height:100%;
+    }
+  }
+  .zs_data{
+    flex:1;
+    height:100%;
+    display: flex;
+    flex-direction: column;
+    .zs_real{
+      width:100%;
+      height:310px;
+      display:flex;
+      justify-content: space-between;
+      .el-card{
+        width:50%;
+        margin:$span;
+        margin-right:0px;
+        border-radius: 0px;
+        .el-card__body{
+          .item{
+            margin-bottom: $span;
+          }
+        }
+      }
+    }
+    .zs_chart{
+      margin-left:$span;
+      background-color: #fff;
+      flex:1;
+      width:100%;
     }
   }
 }
