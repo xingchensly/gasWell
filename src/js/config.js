@@ -128,7 +128,52 @@ export let chartDataList = {
     ],
     color: colors
   },
-  zs_chart:{
+  zs_chart: {
+    title: {
+        text: '柱塞画面'
+    },
+    tooltip: {
+        trigger: 'axis'
+    },
+    legend: {
+        data:['油压','瞬时流量','温度']
+    },
+    grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+    },
+    xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: ['周一','周二','周三','周四','周五','周六','周日']
+    },
+    yAxis: {
+        type: 'value'
+    },
+    series: [
+        {
+            name:'油压',
+            type:'line',
+            stack: '总量',
+            data:[120, 132, 101, 134, 90, 230, 210]
+        },
+        {
+            name:'瞬时流量',
+            type:'line',
+            stack: '总量',
+            data:[220, 182, 191, 234, 290, 330, 310]
+        },
+        {
+            name:'温度',
+            type:'line',
+            stack: '总量',
+            data:[150, 232, 201, 154, 190, 330, 410]
+        }
+    ]
+},
+  jx_chart:{
     title: {
         text: '油管压力瞬时流量图',
         subtext: '数据来自长庆油田有限公司',
@@ -139,7 +184,7 @@ export let chartDataList = {
         bottom: 80
     },
     legend: {
-        data: ['瞬时流量','压力'],
+        data: ['瞬时流量','油压'],
         x: 'left'
     },
     dataZoom: [
@@ -227,7 +272,7 @@ export let chartDataList = {
             max: 500
         },
         {
-            name: '压力(Mpa)',
+            name: '油压(Mpa)',
             nameLocation: 'start',
             max: 5,
             type: 'value',
@@ -257,7 +302,7 @@ export let chartDataList = {
             ]
         },
         {
-            name: '压力',
+            name: '油压',
             type: 'line',
             yAxisIndex: 1,
             animation: false,
