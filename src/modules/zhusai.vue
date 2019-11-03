@@ -29,10 +29,15 @@
 </template>
 <script>
 let echarts = require("echarts");
-import { chartDataList} from "../js/config.js";
+
+import { chartDataList ,chartValve} from "../js/config.js";
+import { getHistoryData,setWellData,loginIn ,userGetWellRealTimeData,userGetFieldRealTimeData} from "../js/api";
+import { urlList } from "../config/urls.js";
+
 export default {
   data() {
     return {
+      curzslShow:[0,1,2,3,4,5],
       chartDataList:chartDataList,
       zs_realData:{
         "油管压力":"1.47Mpa",
@@ -55,11 +60,15 @@ export default {
     };
   },
   async created() {
-
+    this.wellInit(1);
   },
   filters: {
   },
-  methods: {},
+  methods: {
+    async wellInit(wellId) {
+      this.$set(this, "wellRealTimeData", await userGetWellRealTimeData(wellId));
+    },
+  },
   components: {},
   mounted() {
     this.zs_chart = echarts.init(this.$refs.zs_chart);

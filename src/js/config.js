@@ -128,51 +128,74 @@ export let chartDataList = {
     ],
     color: colors
   },
-  zs_chart: {
-    title: {
-        text: '柱塞画面'
+  zs_chart:{
+    dataZoom: {
+      type: 'inside'
     },
     tooltip: {
-        trigger: 'axis'
+      trigger: 'axis',
+      axisPointer: {
+        type: 'cross',
+        label: {
+          backgroundColor: '#6a7985'
+        }
+      }
     },
     legend: {
-        data:['油压','瞬时流量','温度']
+      // ...defaultStyle.legend,
+      // data: ['油压','累计流量','套压', '瞬时流量']
+      data: ['油压', '累计流量', '套压']
     },
     grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
     },
-    xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: ['周一','周二','周三','周四','周五','周六','周日']
-    },
-    yAxis: {
+    xAxis: [
+      {
+        // ...defaultStyle.axis,
+        type: 'time',
+        boundaryGap: false
+      }
+    ],
+    yAxis: [
+      {
+        // ...defaultStyle.axis,
         type: 'value'
-    },
+      }
+    ],
     series: [
-        {
-            name:'油压',
-            type:'line',
-            stack: '总量',
-            data:[120, 132, 101, 134, 90, 230, 210]
-        },
-        {
-            name:'瞬时流量',
-            type:'line',
-            stack: '总量',
-            data:[220, 182, 191, 234, 290, 330, 310]
-        },
-        {
-            name:'温度',
-            type:'line',
-            stack: '总量',
-            data:[150, 232, 201, 154, 190, 330, 410]
-        }
-    ]
-},
+      {
+        smooth: true,
+        symbol: 'none',
+        name: '油压',
+        type: 'line',
+        stack: '总量',
+        areaStyle: {},
+        data: []
+      },
+      {
+        smooth: true,
+        symbol: 'none',
+        name: '累计流量',
+        type: 'line',
+        stack: '总量',
+        areaStyle: {},
+        data: []
+      },
+      {
+        smooth: true,
+        symbol: 'none',
+        name: '套压',
+        type: 'line',
+        stack: '总量',
+        areaStyle: {},
+        data: []
+      }
+    ],
+    color: colors
+  },
   jx_chart:{
     title: {
         text: '油管压力瞬时流量图',

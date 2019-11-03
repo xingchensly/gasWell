@@ -3,22 +3,26 @@
     <section class="summary">
       <div class="pipe">
         <div class="valveOutline pointer" @click="showValve">
-          <el-tag class="valveValue" v-if="realTimeData['气动阀反馈']!=undefined">开度：{{realTimeData['气动阀反馈'].tag_value}}</el-tag>
+          <template  v-for="(values,index) in wellRealTimeData">
+            <el-tag class="valveValue" v-if="values.value&&values.display&&values.tagDes=='气动阀反馈'" :key="index">开度：{{values.value.tag_value}}</el-tag>
+          </template>
         </div>
-        <div class="voltage fl">
-          <p v-for="(value,index) in options1" :key="index">
-            {{value}}:
-            <span
-              v-if="realTimeData[value]"
-            >{{realTimeData[value].tag_value | numberFormat}}</span>
-            {{unit[value]}}
+        <div class="voltage fl" v-if="wellRealTimeData.length">
+          <p v-for="(values,index) in wellRealTimeData" :key="index">
+            <template v-if="values.display&&curWellShow.indexOf(index)!=-1">
+              {{values.tagDes}}:
+              <span v-if="values.value">{{values.value.tag_value | numberFormat}}</span>
+              {{values.tagUnit}}
+            </template>
           </p>
         </div>
-        <div class="flow fl">
-          <p v-for="(value,index) in options2" :key="index">
-            {{value}}:
-            <span v-if="realTimeData[value]">{{realTimeData[value].tag_value}}</span>
-            {{unit[value]}}
+        <div class="flow fl" v-if="feildRealTimeData.length">
+          <p v-for="(values,index) in feildRealTimeData" :key="index">
+            <template v-if="values.display">
+              {{values.tagDes}}:
+              <span v-if="values.value">{{values.value.tag_value | numberFormat}}</span>
+              {{values.tagUnit}}
+            </template>
           </p>
         </div>
       </div>
@@ -91,11 +95,12 @@
 <script>
 let echarts = require("echarts");
 import { chartDataList ,chartValve} from "../js/config.js";
-import { getWellInfo, getRealTimeData, getHistoryData,setWellData,loginIn } from "../js/api";
+import { getHistoryData,setWellData,loginIn ,userGetWellRealTimeData,userGetFieldRealTimeData} from "../js/api";
 import { urlList } from "../config/urls.js";
 export default {
   data() {
     return {
+      curWellShow:[0,1,2,3,4,5],
       loginIn:false,
       userForm:{
         name:"admin",
@@ -113,33 +118,34 @@ export default {
       dialogFormVisible: false,
       formLabelWidth: "120px",
       dialogFormVisible: false,
-      unit: {
-        光伏板电压: "V",
-        光伏板电流: "A",
-        阀门开度: "%",
-        套压: "MPa",
-        油压: "MPa",
-        瞬时流量: "m³/h",
-        累计流量: "m³/h",
-        流量计压力: "V",
-        流量计温度: "℃",
-        蓄电池电压: "V",
-        蓄电池电流: "A"
-      },
-      options1: [
-        "油压",
-        "套压",
-        "流量计压力",
-        "流量计温度",
-        "瞬时流量",
-        "累计流量"
-      ],
-      options2: ["光伏板电压", "光伏板电流", "蓄电池电压", "蓄电池电流"],
+      // unit: {
+      //   光伏板电压: "V",
+      //   光伏板电流: "A",
+      //   阀门开度: "%",
+      //   套压: "MPa",
+      //   油压: "MPa",
+      //   瞬时流量: "m³/h",
+      //   累计流量: "m³/h",
+      //   流量计压力: "V",
+      //   流量计温度: "℃",
+      //   蓄电池电压: "V",
+      //   蓄电池电流: "A"
+      // },
+      // options1: [
+      //   "油压",
+      //   "套压",
+      //   "流量计压力",
+      //   "流量计温度",
+      //   "瞬时流量",
+      //   "累计流量"
+      // ],
+      // options2: ["光伏板电压", "光伏板电流", "蓄电池电压", "蓄电池电流"],
       // value: "",
       chartDataList: chartDataList,
       chartValve: chartValve,
-      realTimeData: {},
-      historyData: {},
+      wellRealTimeData: [],
+      feildRealTimeData: [],
+      historyData: [],
       timer: null,
       interval: 60000,
       imageInterval: 600000,
@@ -152,24 +158,27 @@ export default {
   watch:{
     curWellId:function(curvalue,oldvalue){
       console.log('qijing change'+this.curWellId);
-            //清空历史数据
-      chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
-          chartDataList.lineArea2.series[index1].data = [];
-      });
-      // this.$set(this, "curWellId", value);
-      // this.wellInit(value);
+      if(curvalue===null){
 
-      this.wellInit(this.curWellId);
+      }else{
+                    //清空历史数据
+          chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
+          chartDataList.lineArea2.series[index1].data = [];
+        });
+        // this.$set(this, "curWell.curWellId", value);
+        // this.wellInit(value);
+        this.wellInit(this.curWellId);
+      }
     }
   },
   async created() {
 
-    this.showImage(0);
-    setInterval(() => {
-      this.showImage(0);
-    }, this.imageInterval);
+    // this.showImage(0);
+    // setInterval(() => {
+    //   this.showImage(0);
+    // }, this.imageInterval);
 
-    this.wellInit(this.curWellId);
+    this.wellInit(1);
   },
   filters: {
     numberFormat(value) {
@@ -252,9 +261,9 @@ export default {
       this.imgUrl = urlList.img + "?imgIndex=" + this.imgIndex;
     },
     async wellInit(wellId) {
-      const realTimeDataRequest = await getRealTimeData(wellId);
-      this.$set(this, "realTimeData", realTimeDataRequest);
-      this.showRealTimeChart();
+      this.$set(this, "wellRealTimeData", await userGetWellRealTimeData(wellId));
+      this.$set(this, "feildRealTimeData", await userGetFieldRealTimeData());
+      // this.showRealTimeChart();
     },
     RealTimeTrigger() {
       this.curLine = 0;
@@ -274,11 +283,13 @@ export default {
       this.getHistoryDataFn(startTime, endTime);
     },
     async getRealTimeDataFn() {
-      this.$set(this, "realTimeData", await getRealTimeData(this.curWellId));
-      this.updateRealTimeDataToLineChart(this.realTimeData);
+      this.$set(this, "wellRealTimeData", await userGetWellRealTimeData(this.curWellId));
+      this.$set(this, "feildRealTimeData", await userGetFieldRealTimeData());
+
+      this.updateRealTimeDataToLineChart(this.wellRealTimeData);
     },
     tagNameToId(name) {
-      return this.realTimeData[name].tag_id;
+      return this.wellRealTimeData[name].tag_id;
     },
     async getHistoryDataFn(st, et) {
       let tagArrTemple = [];
@@ -308,14 +319,14 @@ export default {
         }, this.interval);
       }
     },
-    updateRealTimeDataToLineChart(realTimeData) {
+    updateRealTimeDataToLineChart(wellRealTimeData) {
       //添加实时数据到echart
       chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
-        Object.keys(realTimeData).forEach((value, index, arr) => {
-          if (value1.name == value&&realTimeData[value]&&realTimeData[value].update_time!=null&&realTimeData[value].tag_value!=null) {
+        Object.keys(wellRealTimeData).forEach((value, index, arr) => {
+          if (value1.name == value&&wellRealTimeData[value]&&wellRealTimeData[value].update_time!=null&&wellRealTimeData[value].tag_value!=null) {
             let arrTemp = [];
-            arrTemp.push(new Date(realTimeData[value].update_time).getTime());
-            arrTemp.push(realTimeData[value].tag_value);
+            arrTemp.push(new Date(wellRealTimeData[value].update_time).getTime());
+            arrTemp.push(wellRealTimeData[value].tag_value);
             chartDataList.lineArea2.series[index1].data.push(arrTemp);
           }
         });

@@ -2,21 +2,21 @@
   <div class="total">
     <jianxie v-if="curWellId==10010"></jianxie>
     <zhusai v-else-if="curWellId==10086"></zhusai>
-    <gas v-else :curWellId='curWellId'></gas>
+    <gas v-else-if="curWellId" :curWellId='curWellId'></gas>
     <div class="wellSelect">
       <el-select v-model="curWellValue" placeholder="请选择" @change="wellSelect">
         <el-option
           v-for="item in wellSelectOptions"
-          :key="item.device_id"
-          :label="item.device_name"
-          :value="item.device_id"
+          :key="item.wellID"
+          :label="item.wellName"
+          :value="item.wellID"
         ></el-option>
       </el-select>
     </div>
   </div>
 </template>
 <script>
-import { getWellInfo } from "../js/api";
+import {userLoginIn,userGetWellList} from "../js/api";
 import { urlList } from "../config/urls.js";
 import gas from "./gas.vue";
 import zhusai from "./zhusai.vue";
@@ -27,32 +27,44 @@ export default {
     return {
       wellSelectOptions: [],
       curWellValue: "",
-      curWellId: null
+      curWellId: null,
+      timer:null,
+      tokenInfo:{}
     };
   },
   async created() {
-    const wellInfo = await getWellInfo();
-    wellInfo.shift(); //剔除井场
+    this.tokenInfo=await this.GetToken();  
+    localStorage.setItem("token",this.tokenInfo.info);
+
+    const wellInfo = await userGetWellList();
     let objTemple={
-      description: "",
-      device_id: 10086,
-      device_name: "柱塞"
+      wellID: 10086,
+      wellName: "柱塞"
     }
     let objTemple2={
-      description: "",
-      device_id: 10010,
-      device_name: "间歇"
+      wellID: 10010,
+      wellName: "间歇"
     }
     wellInfo.push(objTemple);// 添加柱塞
     wellInfo.push(objTemple2);// 添加间歇
 
     this.$set(this, "wellSelectOptions", wellInfo);
-    this.$set(this, "curWellValue", this.wellSelectOptions[0].device_name);
-    this.$set(this, "curWellId", this.wellSelectOptions[0].device_id);
+    this.$set(this, "curWellValue", this.wellSelectOptions[0].wellName);
+    this.$set(this, "curWellId", this.wellSelectOptions[0].wellID);
   },
   filters: {
   },
   methods: {
+    async GetToken(){
+      let tokenInfo = await userLoginIn();
+      if(!tokenInfo.result){
+        clearTimeout(this.timer);
+        this.timer=setTimeout(() => {
+          this.GetToken()
+        }, 500);
+      }
+      return tokenInfo;
+    },
     wellSelect(value) {
       this.$set(this, "curWellId", value);
     }
