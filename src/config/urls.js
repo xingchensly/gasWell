@@ -9,12 +9,13 @@ export let urlList = {
   wellInfo: ip + ':' + port1 + '/iocollection/deviceslist',
   realtime: ip + ':' + port1 + '/iocollection/getdata?tags=["0"]&info_type="1"',
   history: ip + ':' + port + '/getHistoryDatas',
-  img: ip + ':' + port + '/getFieldImage',
 
+  img: ip + ':' + port + '/basic/getfieldimage',
   userCreatUser: `${ip}:${port}/user/createuser`,
   userLoginIn: `${ip}:${port}/user/login`,
   userLoginOut: `${ip}:${port}/user/logoff`,
   userGetWellRealTimeData: `${ip}:${port}/realtime/getrealtimebywellid`,
   userGetFieldRealTimeData: `${ip}:${port}/realtime/getrealtimebyfieldid`,
+  userGetHistoryData: `${ip}:${port}/history/gethistorybytagid`,
   userGetWellList: `${ip}:${port}/basic/getwellsbyfieldid`
 }

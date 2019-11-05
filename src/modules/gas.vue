@@ -1,5 +1,5 @@
 <template>
-  <div class="gas_container">
+  <div class="gas_container" >
     <section class="summary">
       <div class="pipe">
         <div class="valveOutline pointer" @click="showValve">
@@ -43,6 +43,11 @@
         <el-button :type="curLine==1?'primary':''" @click="dialogFormVisible=true">历史曲线</el-button>
       </div>
     </section>
+    <el-button @click.stop="changeButton(1)" class="button1" type="primary">间歇画面</el-button>
+    <el-button @click.stop="changeButton(2)" class="button2" type="primary">柱塞画面</el-button>
+    <div class="mask" @click="changeButton(0)" v-if="buttonNumber==1||buttonNumber==2"></div>
+    <jianxie v-if="buttonNumber==1" :wellSelectOptions='wellSelectOptions' :curWellId='curWellId' :wellRealTimeData='wellRealTimeData' :feildRealTimeData='feildRealTimeData'></jianxie>
+    <zhusai v-else-if="buttonNumber==2" :wellSelectOptions='wellSelectOptions' :curWellId='curWellId' :wellRealTimeData='wellRealTimeData' :feildRealTimeData='feildRealTimeData'></zhusai>
     <el-dialog title="历史曲线配置" :visible.sync="dialogFormVisible">
       <el-form>
         <el-form-item label="查询时间范围" :label-width="formLabelWidth">
@@ -95,11 +100,14 @@
 <script>
 let echarts = require("echarts");
 import { chartDataList ,chartValve} from "../js/config.js";
-import { getHistoryData,setWellData,loginIn ,userGetWellRealTimeData,userGetFieldRealTimeData} from "../js/api";
+import { userGetWellHistory,setWellData,loginIn ,userGetWellRealTimeData,userGetFieldRealTimeData} from "../js/api";
 import { urlList } from "../config/urls.js";
+import zhusai from "./zhusai.vue";
+import jianxie from "./jianxie.vue";
 export default {
   data() {
     return {
+      buttonNumber:0,
       curWellShow:[0,1,2,3,4,5],
       loginIn:false,
       userForm:{
@@ -111,36 +119,12 @@ export default {
       dialogVisible: false,
       imgUrl: "",
       imgIndex: 0,
-      wellSelectOptions: [],
       curWellValue: "",
       curLine: 0,
       pickDate: "",
       dialogFormVisible: false,
       formLabelWidth: "120px",
       dialogFormVisible: false,
-      // unit: {
-      //   光伏板电压: "V",
-      //   光伏板电流: "A",
-      //   阀门开度: "%",
-      //   套压: "MPa",
-      //   油压: "MPa",
-      //   瞬时流量: "m³/h",
-      //   累计流量: "m³/h",
-      //   流量计压力: "V",
-      //   流量计温度: "℃",
-      //   蓄电池电压: "V",
-      //   蓄电池电流: "A"
-      // },
-      // options1: [
-      //   "油压",
-      //   "套压",
-      //   "流量计压力",
-      //   "流量计温度",
-      //   "瞬时流量",
-      //   "累计流量"
-      // ],
-      // options2: ["光伏板电压", "光伏板电流", "蓄电池电压", "蓄电池电流"],
-      // value: "",
       chartDataList: chartDataList,
       chartValve: chartValve,
       wellRealTimeData: [],
@@ -154,14 +138,12 @@ export default {
       gaugeChart: null
     };
   },
-  props:["curWellId"],
+  props:["curWellId","wellSelectOptions"],
   watch:{
     curWellId:function(curvalue,oldvalue){
-      console.log('qijing change'+this.curWellId);
       if(curvalue===null){
-
       }else{
-                    //清空历史数据
+          //清空历史数据
           chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
           chartDataList.lineArea2.series[index1].data = [];
         });
@@ -172,30 +154,36 @@ export default {
     }
   },
   async created() {
+    this.showImage(0);
+    setInterval(() => {
+      this.showImage(0);
+    }, this.imageInterval);
 
-    // this.showImage(0);
-    // setInterval(() => {
-    //   this.showImage(0);
-    // }, this.imageInterval);
-
-    this.wellInit(1);
+    // this.wellInit(1);
   },
   filters: {
     numberFormat(value) {
-      var param = "";
-      var k = 10000,
-        sizes = ["", "万", "亿", "万亿", "万万亿"],
-        i;
-      if (value < k) {
-        param = value;
-      } else {
-        i = Math.floor(Math.log(value) / Math.log(k));
-        param = (value / Math.pow(k, i)).toFixed(2) + sizes[i];
+      if(typeof value === 'number' && !isNaN(value)){
+        var param = "";
+        var k = 10000,
+          sizes = ["", "万", "亿", "万亿", "万万亿"],
+          i;
+        if (value < k) {
+          param = value;
+        } else {
+          i = Math.floor(Math.log(value) / Math.log(k));
+          param = (value / Math.pow(k, i)).toFixed(2) + sizes[i];
+        }
+        return param;
+      }else{
+        return 0
       }
-      return param;
     }
   },
   methods: {
+    changeButton(index){
+      this.buttonNumber=index;
+    },
     async userConfirm(){
       this.dialogUserInfoShow = false;
       let userBack=await loginIn(this.userForm);
@@ -258,12 +246,55 @@ export default {
         this.imgIndex == 0;
       }
       if (this.imgIndex < 0) this.imgIndex = 0;
-      this.imgUrl = urlList.img + "?imgIndex=" + this.imgIndex;
+      this.imgUrl = urlList.img + "?imageindex=" + this.imgIndex;
     },
     async wellInit(wellId) {
       this.$set(this, "wellRealTimeData", await userGetWellRealTimeData(wellId));
+      //添加tagDes
+      this.wellRealTimeData.forEach((value,index,arr)=>{
+          chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
+            if (value1.name == value.tagDes) {
+              chartDataList.lineArea2.series[index1].tagName = value.tagName;
+            }
+          });
+      })
+      this.wellRealTimeData.forEach((value,index,arr)=>{
+          chartDataList.zs_chart.series.forEach((value1, index1, arr1) => {
+            if (value1.name == value.tagDes) {
+              chartDataList.zs_chart.series[index1].tagName = value.tagName;
+            }
+          });
+      })
+      this.wellRealTimeData.forEach((value,index,arr)=>{
+          chartDataList.jx_chart.series.forEach((value1, index1, arr1) => {
+            if (value1.name == value.tagDes) {
+              chartDataList.jx_chart.series[index1].tagName = value.tagName;
+            }
+          });
+      })      
       this.$set(this, "feildRealTimeData", await userGetFieldRealTimeData());
-      // this.showRealTimeChart();
+      this.feildRealTimeData.forEach((value,index,arr)=>{
+          chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
+            if (value1.name == value.tagName) {
+              chartDataList.lineArea2.series[index1].tagName = value.tagName;
+            }
+          });
+      })
+      this.feildRealTimeData.forEach((value,index,arr)=>{
+          chartDataList.zs_chart.series.forEach((value1, index1, arr1) => {
+            if (value1.name == value.tagName) {
+              chartDataList.zs_chart.series[index1].tagName = value.tagName;
+            }
+          });
+      })
+      this.feildRealTimeData.forEach((value,index,arr)=>{
+          chartDataList.jx_chart.series.forEach((value1, index1, arr1) => {
+            if (value1.name == value.tagName) {
+              chartDataList.jx_chart.series[index1].tagName = value.tagName;
+            }
+          });
+      })            
+      this.showRealTimeChart();
     },
     RealTimeTrigger() {
       this.curLine = 0;
@@ -288,29 +319,46 @@ export default {
 
       this.updateRealTimeDataToLineChart(this.wellRealTimeData);
     },
-    tagNameToId(name) {
-      return this.wellRealTimeData[name].tag_id;
+    toTagName(name) {
+      let tagName='';
+      this.wellRealTimeData.forEach((value,index,arr)=>{
+        if(value.tagDes==name){
+          tagName=value.tagName;
+        }
+      })
+      if(!tagName){
+        this.feildRealTimeData.forEach((value,index,arr)=>{
+          if(value.tagDes==name){
+            tagName=value.tagName;
+          }
+        })
+      }
+      return tagName;
     },
     async getHistoryDataFn(st, et) {
       let tagArrTemple = [];
       chartDataList.lineArea2.legend.data.forEach((value, index, arr) => {
-        tagArrTemple.push(this.tagNameToId(value));
+        tagArrTemple.push(this.toTagName(value));
       });
-      tagArrTemple = "[" + tagArrTemple + "]";
-      const realHistoryDataRequest = await getHistoryData(tagArrTemple, st, et);
+      // tagArrTemple = "[" + tagArrTemple + "]";
+      const realHistoryDataRequest = await userGetWellHistory(tagArrTemple, st, et);
       this.$set(this, "historyData", realHistoryDataRequest);
       this.setHistoryDataToLineChart(this.historyData);
     },
     setHistoryDataToLineChart(historyData) {
       //添加历史数据到echart
       clearInterval(this.timer);
-      historyData.forEach((value, index, arr) => {
-        chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
-          if (value1.name == value.tagName) {
-            chartDataList.lineArea2.series[index1].data = value.datas&&value.datas.length>0?value.datas:[];
-          }
+      if(historyData&&historyData.length>0){
+        historyData.forEach((value, index, arr) => {
+          chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
+            console.log(value1.tagName,value.tagName)
+            if (value1.tagName == value.tagName) {
+              chartDataList.lineArea2.series[index1].data = value.datas&&value.datas.length>0?value.datas:[];
+            }
+          });
         });
-      });
+      }else{console.log('sly---setHistoryDataToLineChart-historyData',historyData)}
+      console.log(this.chartDataList.lineArea2)
       this.lineChart.setOption(this.chartDataList.lineArea2);
       if (this.curLine == 0) {
         //如果显示实时数据曲线，添加定时器获取实时数据
@@ -334,7 +382,7 @@ export default {
       this.lineChart.setOption(this.chartDataList.lineArea2);
     }
   },
-  components: {},
+  components: {zhusai,jianxie},
   mounted() {
     this.lineChart = echarts.init(this.$refs.chart);
     this.lineChart.setOption(this.chartDataList.lineArea2);
@@ -351,11 +399,25 @@ export default {
 .userForm{
   width:80%;
 }
+.mask{
+  position: absolute;
+  width:100%;
+  height:100%;
+  background-color: rgba(0,0,0,0.8);
+}
 .gas_container {
   width: 100%;
   height: 100%;
   flex-direction: column;
   @include flexCenter;
+  .button1,.button2{
+    position: absolute;
+    top:10px;
+    left:350px;
+  }
+  .button2{
+    left:450px;
+  }
   section {
     width: 100%;
     @include flexCenter;

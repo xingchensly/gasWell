@@ -1,8 +1,6 @@
 <template>
   <div class="total">
-    <jianxie v-if="curWellId==10010"></jianxie>
-    <zhusai v-else-if="curWellId==10086"></zhusai>
-    <gas v-else-if="curWellId" :curWellId='curWellId'></gas>
+    <gas :curWellId='curWellId' :wellSelectOptions='wellSelectOptions'></gas>
     <div class="wellSelect">
       <el-select v-model="curWellValue" placeholder="请选择" @change="wellSelect">
         <el-option
@@ -19,8 +17,6 @@
 import {userLoginIn,userGetWellList} from "../js/api";
 import { urlList } from "../config/urls.js";
 import gas from "./gas.vue";
-import zhusai from "./zhusai.vue";
-import jianxie from "./jianxie.vue";
 
 export default {
   data() {
@@ -37,16 +33,6 @@ export default {
     localStorage.setItem("token",this.tokenInfo.info);
 
     const wellInfo = await userGetWellList();
-    let objTemple={
-      wellID: 10086,
-      wellName: "柱塞"
-    }
-    let objTemple2={
-      wellID: 10010,
-      wellName: "间歇"
-    }
-    wellInfo.push(objTemple);// 添加柱塞
-    wellInfo.push(objTemple2);// 添加间歇
 
     this.$set(this, "wellSelectOptions", wellInfo);
     this.$set(this, "curWellValue", this.wellSelectOptions[0].wellName);
@@ -69,7 +55,7 @@ export default {
       this.$set(this, "curWellId", value);
     }
   },
-  components: {gas,zhusai,jianxie},
+  components: {gas},
   mounted() {
   }
 };
