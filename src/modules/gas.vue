@@ -275,21 +275,21 @@ export default {
       this.$set(this, "feildRealTimeData", await userGetFieldRealTimeData());
       this.feildRealTimeData.forEach((value,index,arr)=>{
           chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
-            if (value1.name == value.tagName) {
+            if (value1.name == value.tagDes) {
               chartDataList.lineArea2.series[index1].tagName = value.tagName;
             }
           });
       })
       this.feildRealTimeData.forEach((value,index,arr)=>{
           chartDataList.zs_chart.series.forEach((value1, index1, arr1) => {
-            if (value1.name == value.tagName) {
+            if (value1.name == value.tagDes) {
               chartDataList.zs_chart.series[index1].tagName = value.tagName;
             }
           });
       })
       this.feildRealTimeData.forEach((value,index,arr)=>{
           chartDataList.jx_chart.series.forEach((value1, index1, arr1) => {
-            if (value1.name == value.tagName) {
+            if (value1.name == value.tagDes) {
               chartDataList.jx_chart.series[index1].tagName = value.tagName;
             }
           });
@@ -351,7 +351,6 @@ export default {
       if(historyData&&historyData.length>0){
         historyData.forEach((value, index, arr) => {
           chartDataList.lineArea2.series.forEach((value1, index1, arr1) => {
-            console.log(value1.tagName,value.tagName)
             if (value1.tagName == value.tagName) {
               chartDataList.lineArea2.series[index1].data = value.datas&&value.datas.length>0?value.datas:[];
             }

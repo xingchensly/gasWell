@@ -1,7 +1,8 @@
 // let ip = '//10.59.210.19'
-let ip = '//117.34.118.44'
+let ip = process.env.NODE_ENV == 'production'?'//10.59.210.19':'//117.34.118.44'
 // let port = 8080
-let port = 33063
+console.log("urls")
+let port = process.env.NODE_ENV == 'production'?8080:33063
 let port1 = 33066
 export let urlList = {
   loginIn: ip + ':' + port1 + '/iocollection/loginIn',
